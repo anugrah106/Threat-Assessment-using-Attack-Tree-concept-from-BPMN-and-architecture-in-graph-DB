@@ -1,0 +1,272 @@
+linux file open
+1,"nodeImpact(business_process)","OR",0
+2,"RULE 25 (An impacted child task affects an Process)","AND",0
+3,"nodeImpact(t7)","OR",0
+4,"RULE 42 (impacted child)","AND",0
+5,"nodeImpact(web2,vm2)","OR",0
+6,"RULE 35 (A compromised host impacts a service)","AND",0
+7,"execCode(vm2,root)","OR",0
+8,"RULE 41 (A compromised host impacts its guests)","AND",0
+9,"execCode(hypervisor2,kvm)","OR",0
+10,"RULE 40 (VM Escalation)","AND",0
+11,"execCode(vm3,root)","OR",0
+12,"RULE 0 (When a principal is compromised any machine he has an account on will also be compromised)","AND",0
+13,"canAccessHost(vm3)","OR",0
+14,"RULE 8 (Access a host through executing code on the machine)","AND",0
+14,11,-1
+13,14,-1
+15,"RULE 9 (Access a host through a log-in service)","AND",0
+16,"netAccess(vm3,sshProtocol,sshPort)","OR",0
+17,"RULE 5 (multi-hop access)","AND",0
+18,"hacl(desktop,vm3,sshProtocol,sshPort)","LEAF",1
+17,18,-1
+19,"execCode(desktop,account_desktop)","OR",0
+20,"RULE 0 (When a principal is compromised any machine he has an account on will also be compromised)","AND",0
+21,"canAccessHost(desktop)","OR",0
+22,"RULE 8 (Access a host through executing code on the machine)","AND",0
+22,19,-1
+21,22,-1
+23,"RULE 8 (Access a host through executing code on the machine)","AND",0
+24,"execCode(desktop,root)","OR",0
+25,"RULE 1 (local exploit)","AND",0
+26,"vulExists(desktop,'CVE-2016-6325',httpd,localExploit,privEscalation)","LEAF",1
+25,26,-1
+25,19,-1
+24,25,-1
+27,"RULE 1 (local exploit)","AND",0
+27,26,-1
+27,24,-1
+24,27,-1
+28,"RULE 1 (local exploit)","AND",0
+28,26,-1
+29,"execCode(desktop,ssh)","OR",0
+30,"RULE 2 (remote exploit of a server program)","AND",0
+31,"netAccess(desktop,sshProtocol,sshPort)","OR",0
+32,"RULE 6 (direct network access)","AND",0
+33,"hacl(internet,desktop,sshProtocol,sshPort)","LEAF",1
+32,33,-1
+34,"attackerLocated(internet)","LEAF",1
+32,34,-1
+31,32,-1
+30,31,-1
+35,"networkServiceInfo(desktop,sshd,sshProtocol,sshPort,ssh)","LEAF",1
+30,35,-1
+36,"vulExists(desktop,'CVE-2016-0777',sshd,remoteExploit,privEscalation)","LEAF",1
+30,36,-1
+29,30,-1
+28,29,-1
+24,28,-1
+37,"RULE 1 (local exploit)","AND",0
+37,26,-1
+38,"execCode(desktop,www)","OR",0
+39,"RULE 2 (remote exploit of a server program)","AND",0
+40,"netAccess(desktop,httpProtocol,httpPort)","OR",0
+41,"RULE 6 (direct network access)","AND",0
+42,"hacl(internet,desktop,httpProtocol,httpPort)","LEAF",1
+41,42,-1
+41,34,-1
+40,41,-1
+39,40,-1
+43,"networkServiceInfo(desktop,httpd,httpProtocol,httpPort,www)","LEAF",1
+39,43,-1
+44,"vulExists(desktop,'CVE-2016-7479',httpd,remoteExploit,privEscalation)","LEAF",1
+39,44,-1
+38,39,-1
+37,38,-1
+24,37,-1
+23,24,-1
+21,23,-1
+45,"RULE 8 (Access a host through executing code on the machine)","AND",0
+45,29,-1
+21,45,-1
+46,"RULE 8 (Access a host through executing code on the machine)","AND",0
+46,38,-1
+21,46,-1
+47,"RULE 9 (Access a host through a log-in service)","AND",0
+47,31,-1
+48,"logInService(desktop,sshProtocol,sshPort)","OR",0
+49,"RULE 13 (Access a host through executing code on the machine)","AND",0
+49,35,-1
+48,49,-1
+47,48,-1
+21,47,-1
+20,21,-1
+50,"hasAccount(account_desktop,desktop,account_desktop)","LEAF",1
+20,50,-1
+51,"principalCompromised(account_desktop)","OR",0
+52,"RULE 11 (password sniffing)","AND",0
+53,"execCode(container1,root)","OR",0
+54,"RULE 0 (When a principal is compromised any machine he has an account on will also be compromised)","AND",0
+55,"canAccessHost(container1)","OR",0
+56,"RULE 8 (Access a host through executing code on the machine)","AND",0
+56,53,-1
+55,56,-1
+57,"RULE 9 (Access a host through a log-in service)","AND",0
+58,"netAccess(container1,sshProtocol,sshPort)","OR",0
+59,"RULE 5 (multi-hop access)","AND",0
+60,"hacl(desktop,container1,sshProtocol,sshPort)","LEAF",1
+59,60,-1
+59,19,-1
+58,59,-1
+61,"RULE 5 (multi-hop access)","AND",0
+61,60,-1
+61,24,-1
+58,61,-1
+62,"RULE 5 (multi-hop access)","AND",0
+62,60,-1
+62,29,-1
+58,62,-1
+63,"RULE 5 (multi-hop access)","AND",0
+63,60,-1
+63,38,-1
+58,63,-1
+57,58,-1
+64,"logInService(container1,sshProtocol,sshPort)","OR",0
+65,"RULE 13 (Access a host through executing code on the machine)","AND",0
+66,"networkServiceInfo(container1,sshd,sshProtocol,sshPort,ssh)","LEAF",1
+65,66,-1
+64,65,-1
+57,64,-1
+55,57,-1
+54,55,-1
+67,"hasAccount(account_desktop,container1,root)","LEAF",1
+54,67,-1
+54,51,-1
+53,54,-1
+52,53,-1
+52,67,-1
+51,52,-1
+68,"RULE 11 (password sniffing)","AND",0
+68,24,-1
+68,50,-1
+51,68,-1
+69,"RULE 11 (password sniffing)","AND",0
+69,11,-1
+70,"hasAccount(account_desktop,vm3,root)","LEAF",1
+69,70,-1
+51,69,-1
+71,"RULE 12 (password sniffing)","AND",0
+71,53,-1
+71,67,-1
+51,71,-1
+72,"RULE 12 (password sniffing)","AND",0
+72,19,-1
+72,50,-1
+51,72,-1
+73,"RULE 12 (password sniffing)","AND",0
+73,11,-1
+73,70,-1
+51,73,-1
+20,51,-1
+19,20,-1
+17,19,-1
+16,17,-1
+74,"RULE 5 (multi-hop access)","AND",0
+74,18,-1
+74,24,-1
+16,74,-1
+75,"RULE 5 (multi-hop access)","AND",0
+75,18,-1
+75,29,-1
+16,75,-1
+76,"RULE 5 (multi-hop access)","AND",0
+76,18,-1
+76,38,-1
+16,76,-1
+15,16,-1
+77,"logInService(vm3,sshProtocol,sshPort)","OR",0
+78,"RULE 13 (Access a host through executing code on the machine)","AND",0
+79,"networkServiceInfo(vm3,sshd,sshProtocol,sshPort,ssh)","LEAF",1
+78,79,-1
+77,78,-1
+15,77,-1
+13,15,-1
+12,13,-1
+12,70,-1
+12,51,-1
+11,12,-1
+10,11,-1
+80,"vulExists(hypervisor2,'CVE-2016-6258',kvmd,localExploit,vmEscalation)","LEAF",1
+10,80,-1
+81,"iaasHostInfo(iaas,hypervisor2,kvmd,kvm)","LEAF",1
+10,81,-1
+10,11,-1
+82,"iaasGuestInfo(iaas,vm3,hypervisor2,kvmd,kvm)","LEAF",1
+10,82,-1
+9,10,-1
+8,9,-1
+83,"iaasGuestInfo(iaas,vm2,hypervisor2,kvmd,kvm)","LEAF",1
+8,83,-1
+7,8,-1
+6,7,-1
+84,"networkServiceInfo(vm2,web2,httpProtocol,httpPort,www)","LEAF",1
+6,84,-1
+5,6,-1
+4,5,-1
+85,"nodeImpact(t_and)","OR",0
+86,"RULE 26 (An impacted child task affects an And task)","AND",0
+87,"nodeImpact(t2)","OR",0
+88,"RULE 34 (A child of an And node is impacted)","AND",0
+89,"nodeImpact(ticketd,container2)","OR",0
+90,"RULE 36 (A Compromised host impacts a service)","AND",0
+91,"execCode(container2,root)","OR",0
+92,"RULE 39 (A compromised deployment impacts its conatiners)","AND",0
+93,"execCode(workstation3,docker)","OR",0
+94,"RULE 38 (Container Escalation)","AND",0
+94,53,-1
+95,"deploymentInfo(docker3,workstation3,dockerd,docker)","LEAF",1
+94,95,-1
+96,"containerInfo(docker3,container2,workstation3,dockerd,docker)","LEAF",1
+94,96,-1
+97,"vulExists(workstation3,'CVE-2014-3499',dockerd,localExploit,vmEscalation)","LEAF",1
+94,97,-1
+93,94,-1
+92,93,-1
+92,96,-1
+91,92,-1
+90,91,-1
+98,"networkServiceInfo(container2,ticketd,tickedProtocol,ticketPort,ticket)","LEAF",1
+90,98,-1
+89,90,-1
+88,89,-1
+88,5,-1
+99,"node(t2,and,web1,vm1,web2,vm2,ticketd,container2,hoteld,container3)","LEAF",1
+88,99,-1
+87,88,-1
+86,87,-1
+100,"nodeImpact(t3)","OR",0
+101,"RULE 29 (An impacted child task affects an And task)","AND",0
+102,"node(t3,and,web1,vm1,web2,vm2,database,container1)","LEAF",1
+101,102,-1
+103,"nodeImpact(database,container1)","OR",0
+104,"RULE 37 (A compromised host impacts a service)","AND",0
+104,53,-1
+105,"networkServiceInfo(container1,database,dbProtocol,dbPort,db)","LEAF",1
+104,105,-1
+103,104,-1
+101,103,-1
+101,5,-1
+100,101,-1
+86,100,-1
+106,"node(t_and,and,t2,t3)","LEAF",1
+86,106,-1
+107,"nodeImpact(t1)","OR",0
+108,"RULE 33 (An impacted child task affects an Flow task)","AND",0
+109,"node(t1,and,web1,vm1,web2,vm2,database,container1,ticketd,container2,hoteld,container3)","LEAF",1
+108,109,-1
+108,89,-1
+108,99,-1
+108,103,-1
+108,5,-1
+107,108,-1
+86,107,-1
+110,"node(business_process,flow,t1,t_and,t_or,t7)","LEAF",1
+86,110,-1
+85,86,-1
+4,85,-1
+111,"node(t7,and,web1,vm1,web2,vm2,payd,container4)","LEAF",1
+4,111,-1
+3,4,-1
+2,3,-1
+2,110,-1
+1,2,-1

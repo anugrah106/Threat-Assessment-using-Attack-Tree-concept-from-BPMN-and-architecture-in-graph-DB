@@ -1,0 +1,12 @@
+primitive(attackerLocated(internet)).
+primitive(iaasHostInfo(iaas, hypervisor1, kvmd, kvm)).
+primitive(iaasGuestInfo(iaas, vm1, hypervisor1, kvmd, kvm)).
+primitive(iaasHostInfo(iaas, hypervisor2, kvmd, kvm)).
+primitive(iaasGuestInfo(iaas, vm2, hypervisor2, kvmd, kvm)).
+primitive(iaasGuestInfo(iaas, vm3, hypervisor2, kvmd, kvm)).
+primitive(deploymentInfo(docker1, workstation1, dockerd, docker)).
+
+
+#Interaction Rules begin
+
+

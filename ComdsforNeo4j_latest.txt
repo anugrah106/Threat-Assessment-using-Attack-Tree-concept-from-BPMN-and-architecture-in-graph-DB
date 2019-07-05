@@ -1,0 +1,213 @@
+
+1. load csv with headers from "file:/VERTICES.CSV" as line with line create(node:Node{id:toInteger(line.NodeId), details:line.NodeDetails,type:line.NodeType})
+
+2.  Load csv with headers from "file:/relations.csv" AS line MATCh(ChildNode:Node{id:toInteger(line.Child)}),(parentNode:Node{id:toInteger(line.Parent)}) merge (parentNode)-[:Input]->(ChildNode)
+
+3. To get all apths from attacker located to nodeImpact(t2):  
+ 
+ match (p:Node{id:34}),(n:Node{id:105}),
+ path=((p)-[*1..20]->(n))
+ return path
+
+4.  match (n:Node{type:"OR"})set n:DerivedNode return n
+
+5.  match (n:Node{type:"AND"})set n:RuleNode return n
+
+6.  match(n:Node{type:"LEAF"}) set n:FactNode:LeafNode return n
+
+7.   match (n) where n.id=26 set n.cvssscore=.78
+8.   match (n) where n.id=36 set n.cvssscore=.65
+9.   match (n) where n.id=44 set n.cvssscore=.98
+10   match (n) where n.id=80 set n.cvssscore=.88
+11.  match (n) where n.id=97 set n.cvssscore=.72
+
+12.  MATCH (p:Node{id:34}),(n:Node{id:105}), path=shortestpath((p)-[*]->(n)) return path
+
+13.  MATCH (p:Node{id:26}),(n:Node{id:1}),(p2:Node{id:36}),(p3:Node{id:44}),(p4:Node{id:80}),(p5:Node{id:97}),
+path = shortestpath((p)-[*]->(n)),path3 = shortestpath((p3)-[*]->(n)),path4 = shortestpath((p4)-[*]->(n)),
+path2 = shortestpath((p2)-[*]->(n)),path5 = shortestpath((p5)-[*]->(n))
+RETURN path, path2,path3,path4, path5
+
+
+14  To get all paths from 26 to Goal with hops from 1 to 20:
+
+ MATCH (p:Node{id:26}),(n:Node{id:1}),
+ path=((p)-[*1..20]->(n))
+ return path
+
+15.  Intersection points:
+
+
+MATCH (p:Node{id:26}),(n:Node{id:1}),(p2:Node{id:36}),(p3:Node{id:44}),(p4:Node{id:80}),(p5:Node{id:97}), path=shortestpath((p)-[*]->(n)),path2=shortestpath((p2)-[*]->(n)),path3=shortestpath((p3)-[*]->(n)),path4=shortestpath((p4)-[*]->(n)),path5=shortestpath((p5)-[*]->(n))  unwind nodes(path)as npath unwind nodes(path2)as npath2 unwind nodes(path3)as npath3 unwind nodes(path4)as npath4 unwind nodes(path5)as npath5 with collect(distinct(npath.id))as ans,collect(distinct(npath2.id))as ans1,collect(distinct(npath3.id))as ans2,collect(distinct(npath4.id))as ans3,collect(distinct(npath5.id))as ans4 return reverse(ans)as A,reverse(ans1)as B,reverse(ans2)as C,reverse(ans3)as D,reverse(ans4)as E,head(filter(n in ans where n in ans1))as intersectAB,head(filter(n in ans1 where n in ans2))as intersectBC,head(filter(n in ans2 where n in ans3))as intersectCD,head(filter(n in ans3 where n in ans4))as intersectDE
+
+
+16.   Business Impact calculation:
+
+ MATCH (p:Node{id:26}),(n:Node{id:1}),(p2:Node{id:36}),(p3:Node{id:44}),(p4:Node{id:80}),(p5:Node{id:97}),
+ path=shortestpath((p)-[*]->(n)),
+ path2=shortestpath((p2)-[*]->(n)),
+ path3=shortestpath((p3)-[*]->(n)),
+ path4=shortestpath((p4)-[*]->(n)),
+ path5=shortestpath((p5)-[*]->(n))  
+ unwind nodes(path)as npath 
+ unwind nodes(path2)as npath2 
+ unwind nodes(path3)as npath3 
+ unwind nodes(path4)as npath4 
+ unwind nodes(path5)as npath5 
+ with p, p2, p3, p4, p5, collect(distinct(npath)) as ans,
+ collect(distinct(npath2))as ans1,
+ collect(distinct(npath3))as ans2,
+ collect(distinct(npath4))as ans3,
+ collect(distinct(npath5))as ans4 
+ with p, p2, p3, p4, p5, head(filter(n in ans where n in ans1))as intersectAB,
+ head(filter(n in ans1 where n in ans2))as intersectBC,
+ head(filter(n in ans2 where n in ans3))as intersectCD,
+ head(filter(n in ans3 where n in ans4))as intersectDE
+ with intersectAB, intersectBC, intersectCD, intersectDE, p, p2, p3, p4, p5 
+ set intersectAB.cvssscore=
+ CASE WHEN intersectAB.type="AND" THEN p.cvssscore * p2.cvssscore
+ WHEN intersectAB.type="OR" THEN  p.cvssscore + p2.cvssscore - p.cvssscore * p2.cvssscore ELSE p.cvssscore END
+ set intersectBC.cvssscore=
+ CASE WHEN intersectBC.type="AND" THEN intersectAB.cvssscore * p3.cvssscore
+ WHEN intersectBC.type="OR" THEN  intersectAB.cvssscore + p3.cvssscore - intersectAB.cvssscore * p3.cvssscore ELSE intersectAB.cvssscore END
+ set intersectCD.cvssscore=
+ CASE WHEN intersectCD.type="AND" THEN intersectBC.cvssscore * p4.cvssscore
+ WHEN intersectCD.type="OR" THEN  intersectBC.cvssscore + p4.cvssscore - intersectBC.cvssscore * p4.cvssscore ELSE intersectBC.cvssscore END
+ set intersectDE.cvssscore=
+ CASE WHEN intersectDE.type="AND" THEN intersectCD.cvssscore * p5.cvssscore
+ WHEN intersectDE.type="OR" THEN  intersectCD.cvssscore + p5.cvssscore - intersectCD.cvssscore * p5.cvssscore ELSE intersectCD.cvssscore END
+ return intersectDE.cvssscore as impactScore
+
+
+
+
+17.  Revised Node Impact Calculation:
+
+ MATCH (p:Node{id:26}),(n:Node{id:1}),(p2:Node{id:36}),(p3:Node{id:44}),(p4:Node{id:80}),
+ path=shortestpath((p)-[*]->(n)),
+ path2=shortestpath((p2)-[*]->(n)),
+ path3=shortestpath((p3)-[*]->(n)),
+ path4=shortestpath((p4)-[*]->(n))
+ unwind nodes(path)as npath 
+ unwind nodes(path2)as npath2 
+ unwind nodes(path3)as npath3 
+ unwind nodes(path4)as npath4  
+ with p, p2, p3, p4,  
+ collect(distinct(npath)) as ans,
+ collect(distinct(npath2))as ans1,
+ collect(distinct(npath3))as ans2,
+ collect(distinct(npath4))as ans3 
+ with p, p2, p3, p4, 
+ head(filter(n in ans where n in ans1))as intersectAB,
+ head(filter(n in ans1 where n in ans2))as intersectBC,
+ head(filter(n in ans2 where n in ans3))as intersectCD
+ with intersectAB, intersectBC, intersectCD, p, p2, p3, p4
+ set intersectAB.cvssscore=
+ CASE WHEN intersectAB.type="AND" THEN p.cvssscore * p2.cvssscore
+ WHEN intersectAB.type="OR" THEN  p.cvssscore + p2.cvssscore - p.cvssscore * p2.cvssscore ELSE p.cvssscore END
+ set intersectBC.cvssscore=
+ CASE WHEN intersectBC.type="AND" THEN intersectAB.cvssscore * p3.cvssscore
+ WHEN intersectBC.type="OR" THEN  intersectAB.cvssscore + p3.cvssscore - intersectAB.cvssscore * p3.cvssscore ELSE intersectAB.cvssscore END
+ set intersectCD.cvssscore=
+ CASE WHEN intersectCD.type="AND" THEN intersectBC.cvssscore * p4.cvssscore
+ WHEN intersectCD.type="OR" THEN  intersectBC.cvssscore + p4.cvssscore - intersectBC.cvssscore * p4.cvssscore ELSE intersectBC.cvssscore END
+ 
+ return intersectCD.cvssscore as impactScore
+
+
+
+
+
+18. to asssign error prob
+match (n) set n.errorprob='0.0' return n
+
+match (n) where n.type="LEAF" set n.errorprob=rand() return n
+
+
+
+match (n) where n.id=108 match ()-[rin]->(n) with n, collect (DISTINCT { relationship:type(rin),node: startNode(rin)}) AS incoming return {node: n, incoming:incoming} AS result
+
+match (n) where n.id=108 match ()-[rin]->(n) with n, collect ( {errorprob: startNode(rin).errorprob}) AS incoming unwind incoming as val with n,max(val) as max_val return max_val
+
+match (n) where n.id=108 match ()-[rin]->(n) with n, collect ( {errorprob: startNode(rin).errorprob}) AS incoming unwind incoming as val with n,max(val) as  max_val set n={ errorprob:.59}return max_val,n
+
+
+
+
+match (n) where n.type='AND' match ()-[rin]->(n) 
+with n, collect ( {errorprob: startNode(rin).errorprob}) AS incoming 
+with FILTER(x in incoming WHERE x.errorprob > 0.0) AS res return res
+
+
+
+
+match (n) where n.type='AND' match ()-[rin]->(n) 
+with n, collect ( {errorprob: startNode(rin).errorprob}) AS incoming unwind incoming as val 
+with n,min(val) as min_val 
+set n.errorprob=min_val.errorprob
+return min_val
+
+
+match (n) where n.type='AND' match ()-[rin]->(n) 
+with n, collect ( {errorprob: startNode(rin).errorprob}) AS incoming 
+FILTER(x in incoming WHERE x.errorprob > 0.0) as res
+with n,min(res) as min_val 
+set n.errorprob=min_val.errorprob
+return min_val
+
+
+#Final Working query for AND nodes:
+
+match (n) where n.type='AND' match ()-[rin]->(n) 
+with n, collect ( {errorprob: startNode(rin).errorprob}) AS incoming 
+with n, FILTER(x in incoming WHERE x.errorprob > 0.0) AS res 
+Unwind res as result
+with n, min(result) as min_val
+set n.errorprob=min_val.errorprob
+return n
+
+
+#Final working copy for OR nodes:
+match (n) where n.type='OR' match ()-[rin]->(n) 
+with n, collect ( {errorprob: startNode(rin).errorprob}) AS incoming 
+with n, FILTER(x in incoming WHERE x.errorprob > 0.0) AS res 
+Unwind res as result
+with n, max(result) as max_val
+set n.errorprob=max_val.errorprob
+return n
+
+
+#Finding the leaf node with max prob
+match(n) where n.type='LEAF' 
+return MAX(n.errorprob)
+
+match(n) where n.errorprob=0.9628322856258138 and n.type='LEAF' return n
+
+
+
+#Finding the path from the maxerrorProb leaf node to the root node
+ MATCH (p:Node{id:104}),(n:Node{id:1}),
+ path=((p)-[*1..20]->(n))
+ return path
+
+# find shortest path 
+MATCH (p:Node{id:34}),(n:Node{id:1}), path=shortestpath((p)-[*]->(n)) return path
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

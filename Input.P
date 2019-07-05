@@ -1,0 +1,10 @@
+attackerLocated(internet).
+
+attackGoal(nodeImpact(business_process)).
+iaasHostInfo(iaas, hypervisor1, kvmd, kvm).
+iaasGuestInfo(iaas, vm1, hypervisor1, kvmd, kvm).
+iaasHostInfo(iaas, hypervisor2, kvmd, kvm).
+iaasGuestInfo(iaas, vm2, hypervisor2, kvmd, kvm).
+iaasGuestInfo(iaas, vm3, hypervisor2, kvmd, kvm).
+
+deploymentInfo(docker1, workstation1, dockerd, docker).

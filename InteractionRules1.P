@@ -1,0 +1,251 @@
+primitive(A developer desktop has a HTTP service for remote access, such as dashboard display).
+primitive(This desktop also has a ssh shell for remote access).
+primitive(*).
+primitive(attackerLocated(internet)).
+primitive(iaasHostInfo(iaas, hypervisor1, kvmd, kvm)).
+primitive(iaasHostInfo(iaas, hypervisor2, kvmd, kvm)).
+primitive(iaasGuestInfo(iaas, vm1, hypervisor1, kvmd, kvm)).
+primitive(iaasGuestInfo(iaas, vm2, hypervisor2, kvmd, kvm)).
+primitive(iaasGuestInfo(iaas, vm3, hypervisor2, kvmd, kvm)).
+primitive(deploymentInfo(docker1, workstation1, dockerd, docker)).
+primitive(deploymentInfo(docker2, workstation2, dockerd, docker)).
+primitive(deploymentInfo(docker3, workstation3, dockerd, docker)).
+primitive(containerInfo(docker1, container3, workstation1, dockerd, docker)).
+primitive(containerInfo(docker2, container4, workstation2, dockerd, docker)).
+primitive(containerInfo(docker3, container2, workstation3, dockerd, docker)).
+primitive(containerInfo(docker3, container1, workstation3, dockerd, docker)).
+primitive(hasAccount(account_desktop, desktop, account_desktop)).
+primitive(networkServiceInfo(desktop, httpd, httpProtocol, httpPort, www)).
+primitive(hacl(internet, desktop, httpProtocol, httpPort)).
+primitive(vulExists(desktop, 'CVE-2016-7479', httpd, remoteExploit, privEscalation)).
+primitive(vulExists(desktop, 'CVE-2016-6325', httpd, localExploit, privEscalation)).
+primitive(networkServiceInfo(desktop, sshd, sshProtocol, sshPort, ssh)).
+primitive(hacl(internet, desktop, sshProtocol, sshPort)).
+primitive(vulExists(desktop, 'CVE-2016-0777', sshd, remoteExploit, privEscalation)).
+primitive(hacl(desktop, vm3, sshProtocol, sshPort)).
+primitive(networkServiceInfo(vm3, sshd, sshProtocol, sshPort, ssh)).
+primitive(hasAccount(account_desktop, vm3, root)).
+primitive(hacl(desktop, container1, sshProtocol, sshPort)).
+primitive(networkServiceInfo(container1, sshd, sshProtocol, sshPort, ssh)).
+primitive(hasAccount(account_desktop, container1, root)).
+primitive(networkServiceInfo(vm1, web1, httpProtocol, httpPort, www)).
+primitive(networkServiceInfo(vm2, web2, httpProtocol, httpPort, www)).
+primitive(networkServiceInfo(container1, database, dbProtocol, dbPort, db)).
+primitive(networkServiceInfo(container2, ticketd, tickedProtocol, ticketPort, ticket)).
+primitive(networkServiceInfo(container3, hoteld, hotelProtocol, hotelPort, hotel)).
+primitive(networkServiceInfo(container4, payd, payProtocol, payPort, pay)).
+primitive(vulExists(hypervisor2, 'CVE-2016-6258', kvmd, localExploit, vmEscalation)).
+primitive(vulExists(workstation3, 'CVE-2014-3499', dockerd, localExploit, vmEscalation)).
+primitive(node(business_process, flow, t1, t_and, t_or, t7)).
+primitive(node(t_and, and, t2, t3)).
+primitive(node(t_or, or, t_flow, t6)).
+primitive(node(t_flow, flow, t4, t5)).
+primitive(node(t1, and, web1, vm1, web2, vm2, database, container1, ticketd, container2, hoteld, container3)).
+primitive(node(t2, and, web1, vm1, web2, vm2, ticketd, container2, hoteld, container3)).
+primitive(node(t3, and, web1, vm1, web2, vm2, database, container1)).
+primitive(node(t4, and, web1, vm1, web2, vm2, database, container1)).
+primitive(node(t5, and, web1, vm1, web2, vm2, database, container1, hoteld, container3)).
+primitive(node(t6, and, web1, vm1, web2, vm2, hoteld, container3)).
+primitive(node(t7, and, web1, vm1, web2, vm2, payd, container4)).
+
+
+#Interaction Rules begin
+
+interaction_rule((nodeImpact(business_process):-
+	node(business_process, flow, t1, t_and, t_or, t7),
+	nodeImpact(t7)),
+		rule_desc('An impacted child task affects an Process',0.9)
+	).
+
+interaction_rule((nodeImpact(t_and):-
+	node(t_and, and, t2, t3),
+	nodeImpact(t2),
+	nodeImpact(t3),
+	nodeImpact(t1),
+	node(business_process, flow, t1, t_and, t_or, t7)),
+		rule_desc('An impacted child task affects an Process',0.9)
+	).
+
+interaction_rule((nodeImpact(t_or):-
+	node(t_or, or, t_flow, t6),
+	nodeImpact(t_flow),
+	nodeImpact(t6),
+	nodeImpact(t1),
+	nodeImpact(t_and),
+	node(business_process, flow, t1, t_and, t_or, t7)),
+		rule_desc('An impacted child task affects an Process',0.9)
+	).
+
+interaction_rule((nodeImpact(t_flow):-
+	node(t_flow, flow, t4, t5),
+	nodeImpact(t5)),
+		rule_desc('An impacted child task affects an Process',0.9)
+	).
+
+interaction_rule((nodeImpact(t1):-
+	node(t1, and, web1, vm1, web2, vm2, database, container1, ticketd, container2, hoteld, container3),
+
+	nodeImpact(web2, vm2),
+	nodeImpact(database, container1),
+	nodeImpact(ticketd, container2),
+	nodeImpact(hoteld, container3),
+		rule_desc('An impacted child task affects an Process',0.9)
+	).
+
+interaction_rule((nodeImpact(t2):-
+	node(t2, and, web1, vm1, web2, vm2, ticketd, container2, hoteld, container3),
+
+	nodeImpact(web2, vm2),
+	nodeImpact(ticketd, container2),
+	nodeImpact(hoteld, container3),
+		rule_desc('An impacted child task affects an Process',0.9)
+	).
+
+interaction_rule((nodeImpact(t3):-
+	node(t3, and, web1, vm1, web2, vm2, database, container1),
+
+	nodeImpact(web2, vm2),
+	nodeImpact(database, container1),
+		rule_desc('An impacted child task affects an Process',0.9)
+	).
+
+interaction_rule((nodeImpact(t4):-
+	node(t4, and, web1, vm1, web2, vm2, database, container1),
+
+	nodeImpact(web2, vm2),
+	nodeImpact(database, container1),
+		rule_desc('An impacted child task affects an Process',0.9)
+	).
+
+interaction_rule((nodeImpact(t5):-
+	node(t5, and, web1, vm1, web2, vm2, database, container1, hoteld, container3),
+
+	nodeImpact(t4),
+	node(t_flow, flow, t4, t5)),
+	nodeImpact(web2, vm2),
+	nodeImpact(database, container1),
+	nodeImpact(hoteld, container3),
+		rule_desc('An impacted child task affects an Process',0.9)
+	).
+
+interaction_rule((nodeImpact(t6):-
+	node(t6, and, web1, vm1, web2, vm2, hoteld, container3),
+
+	nodeImpact(web2, vm2),
+	nodeImpact(hoteld, container3),
+		rule_desc('An impacted child task affects an Process',0.9)
+	).
+
+interaction_rule((nodeImpact(t7):-
+	node(t7, and, web1, vm1, web2, vm2, payd, container4),
+
+	nodeImpact(web2, vm2),
+	nodeImpact(payd, container4),
+		rule_desc('An impacted child task affects an Process',0.9)
+	).
+
+interaction_rule((nodeImpact(ticketd, container2):-
+	networkServiceInfo(container2, ticketd, tickedProtocol, ticketPort, ticket),
+	execCode(container2,root)),
+		rule_desc('An impacted child task affects a Process',0.9)
+	).
+
+interaction_rule((nodeImpact(web2, vm2):-
+	networkServiceInfo(vm2, web2, httpProtocol, httpPort, www),
+	execCode(vm2,root)),
+		rule_desc('An impacted child task affects a Process',0.9)
+	).
+
+interaction_rule((nodeImpact(payd, container4):-
+	networkServiceInfo(container4, payd, payProtocol, payPort, pay),
+	execCode(container4,root)),
+		rule_desc('An impacted child task affects a Process',0.9)
+	).
+
+interaction_rule((nodeImpact(database, container1):-
+	networkServiceInfo(container1, sshd, sshProtocol, sshPort, ssh),
+	execCode(container1, root)),
+		rule_desc('An impacted child task affects a Process',0.9)
+	).
+
+interaction_rule((nodeImpact(hoteld, container3):-
+	networkServiceInfo(container3, hoteld, hotelProtocol, hotelPort, hotel),
+	execCode(container3,root)),
+		rule_desc('An impacted child task affects a Process',0.9)
+	).
+
+interaction_rule((execCode(container2,root)):-
+	containerInfo(docker3, container2, workstation3, dockerd, docker),
+	execCode(workstation3, docker)),
+		rule_desc('An impacted child task affects a Process',0.7)
+	).
+
+interaction_rule((execCode(vm2,root)):-
+	iaasGuestInfo(iaas, vm2, hypervisor2, kvmd, kvm)
+	execCode(hypervisor2, kvm)),
+		rule_desc('An impacted child task affects a Process',0.7)
+	).
+
+interaction_rule((execCode(container4,root)):-
+	containerInfo(docker2, container4, workstation2, dockerd, docker),
+	execCode(workstation2, docker)),
+		rule_desc('An impacted child task affects a Process',0.7)
+	).
+
+interaction_rule((execCode(container3,root)):-
+	containerInfo(docker1, container3, workstation1, dockerd, docker),
+	execCode(workstation1, docker)),
+		rule_desc('An impacted child task affects a Process',0.7)
+	).
+
+interaction_rule((execCode(workstation3, docker)):-
+	containerInfo(docker3, container2, workstation3, dockerd, docker),
+	deploymentInfo(docker3, workstation3, dockerd, docker),
+	vulExists(workstation3, 'CVE-2014-3499', dockerd, localExploit, vmEscalation))),
+		rule_desc('An impacted child task affects a Process',0.7)
+	).
+
+interaction_rule((execCode(hypervisor2, kvm)):-
+	iaasGuestInfo(iaas, vm2, hypervisor2, kvmd, kvm),
+	iaasHostInfo(iaas, hypervisor2, kvmd, kvm),
+	vulExists(hypervisor2, 'CVE-2016-6258', kvmd, localExploit, vmEscalation),)),
+		rule_desc('An impacted child task affects a Process',0.7)
+	).
+
+interaction_rule((execCode(workstation2, docker)):-
+	containerInfo(docker2, container4, workstation2, dockerd, docker),
+	deploymentInfo(docker2, workstation2, dockerd, docker),)),
+		rule_desc('An impacted child task affects a Process',0.7)
+	).
+
+interaction_rule((execCode(workstation1, docker)):-
+	containerInfo(docker1, container3, workstation1, dockerd, docker),
+	deploymentInfo(docker1, workstation1, dockerd, docker),)),
+		rule_desc('An impacted child task affects a Process',0.7)
+	).
+
+
+derived(nodeImpact(business_process)).
+derived(nodeImpact(t_and)).
+derived(nodeImpact(t_or)).
+derived(nodeImpact(t_flow)).
+derived(nodeImpact(t1)).
+derived(nodeImpact(t2)).
+derived(nodeImpact(t3)).
+derived(nodeImpact(t4)).
+derived(nodeImpact(t5)).
+derived(nodeImpact(t6)).
+derived(nodeImpact(t7)).
+derived(nodeImpact(web2, vm2)).
+derived(nodeImpact(database, container1)).
+derived(nodeImpact(ticketd, container2)).
+derived(nodeImpact(hoteld, container3)).
+derived(nodeImpact(payd, container4)).
+derived(execCode(container2,root))).
+derived(execCode(vm2,root))).
+derived(execCode(container4,root))).
+derived(execCode(container3,root))).
+derived(execCode(workstation3, docker))).
+derived(execCode(hypervisor2, kvm))).
+derived(execCode(workstation2, docker))).
+derived(execCode(workstation1, docker))).

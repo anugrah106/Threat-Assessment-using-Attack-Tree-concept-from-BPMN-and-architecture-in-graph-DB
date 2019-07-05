@@ -1,0 +1,83 @@
+/*
+A developer desktop has a HTTP service for remote access, such as dashboard display.
+This desktop also has a ssh shell for remote access.
+
+*/
+
+attackerLocated(internet).
+
+attackGoal(nodeImpact(business_process)).
+
+/* iaas */
+iaasHostInfo(iaas, hypervisor1, kvmd, kvm).
+iaasHostInfo(iaas, hypervisor2, kvmd, kvm).
+
+iaasGuestInfo(iaas, vm1, hypervisor1, kvmd, kvm).
+iaasGuestInfo(iaas, vm2, hypervisor2, kvmd, kvm).
+iaasGuestInfo(iaas, vm3, hypervisor2, kvmd, kvm).
+
+
+/* docker */
+deploymentInfo(docker1, workstation1, dockerd, docker).
+deploymentInfo(docker2, workstation2, dockerd, docker).
+deploymentInfo(docker3, workstation3, dockerd, docker).
+
+containerInfo(docker1, container3, workstation1, dockerd, docker).
+containerInfo(docker2, container4, workstation2, dockerd, docker).
+containerInfo(docker3, container2, workstation3, dockerd, docker).
+containerInfo(docker3, container1, workstation3, dockerd, docker).
+
+
+/* desktop */
+hasAccount(account_desktop, desktop, account_desktop).
+
+
+networkServiceInfo(desktop, httpd, httpProtocol, httpPort, www).
+hacl(internet, desktop, httpProtocol, httpPort).
+vulExists(desktop, 'CVE-2016-7479', httpd, remoteExploit, privEscalation).
+vulExists(desktop, 'CVE-2016-6325', httpd, localExploit, privEscalation).
+
+
+networkServiceInfo(desktop, sshd, sshProtocol, sshPort, ssh).
+hacl(internet, desktop, sshProtocol, sshPort).
+vulExists(desktop, 'CVE-2016-0777', sshd, remoteExploit, privEscalation).
+
+/* vm3 */
+hacl(desktop, vm3, sshProtocol, sshPort).
+networkServiceInfo(vm3, sshd, sshProtocol, sshPort, ssh).
+hasAccount(account_desktop, vm3, root).
+
+/* container1 */
+hacl(desktop, container1, sshProtocol, sshPort).
+networkServiceInfo(container1, sshd, sshProtocol, sshPort, ssh).
+hasAccount(account_desktop, container1, root).
+
+
+/* services */
+networkServiceInfo(vm1, web1, httpProtocol, httpPort, www).
+networkServiceInfo(vm2, web2, httpProtocol, httpPort, www).
+
+networkServiceInfo(container1, database, dbProtocol, dbPort, db).
+networkServiceInfo(container2, ticketd, tickedProtocol, ticketPort, ticket).
+networkServiceInfo(container3, hoteld, hotelProtocol, hotelPort, hotel).
+networkServiceInfo(container4, payd, payProtocol, payPort, pay).
+
+
+/* vulnerabilities */
+vulExists(hypervisor2, 'CVE-2016-6258', kvmd, localExploit, vmEscalation).
+vulExists(workstation3, 'CVE-2014-3499', dockerd, localExploit, vmEscalation).
+
+
+/* Mission Dependencies */
+
+node(business_process, flow, t1, t_and, t_or, t7).
+node(t_and, and, t2, t3).
+node(t_or, or, t_flow, t6).
+node(t_flow, flow, t4, t5).
+node(t1, and, web1, vm1, web2, vm2, database, container1, ticketd, container2, hoteld, container3).
+node(t2, and, web1, vm1, web2, vm2, ticketd, container2, hoteld, container3).
+node(t3, and, web1, vm1, web2, vm2, database, container1).
+node(t4, and, web1, vm1, web2, vm2, database, container1).
+node(t5, and, web1, vm1, web2, vm2, database, container1, hoteld, container3).
+node(t6, and, web1, vm1, web2, vm2, hoteld, container3).
+node(t7, and, web1, vm1, web2, vm2, payd, container4).
